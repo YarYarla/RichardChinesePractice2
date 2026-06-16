@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Richard's Assignment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+        .zh-font {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .drag-item.dragging {
+            opacity: 0.5;
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            z-index: 50;
+        }
+        .drop-zone {
+            border-bottom: 4px solid #475569;
+            transition: all 0.2s ease;
+        }
+        .drop-zone.drag-over {
+            background-color: rgba(56, 189, 248, 0.1);
+            border-bottom-color: #38bdf8;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .pop-in {
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        /* Custom scrollbar for a darker theme */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="pb-24">
+
+    <!-- Header Section -->
+    <div class="glass-panel sticky top-0 z-40 border-b border-slate-700/50 shadow-lg mb-8">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent tracking-tight">Richard's Assignment</h1>
+                <p class="text-slate-400 text-sm mt-1 flex items-center gap-2">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span> Online
+                    <span id="cloud-status" class="ml-2 text-xs font-mono bg-slate-800 px-2 py-0.5 rounded text-slate-500">INIT</span>
+                </p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="location.reload()" class="bg-slate-700 hover:bg-slate-600 text-white font-medium py-2 px-4 rounded-lg shadow transition-colors flex items-center text-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Restart
+                </button>
+                <button onclick="scrollToRecords()" class="bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 border border-indigo-500/30 font-medium py-2 px-4 rounded-lg transition-colors flex items-center text-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    View Records
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+        
+        <!-- Instructions -->
+        <div class="mb-10 text-center">
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-200 mb-2 tracking-wide">Sentence Ordering</h2>
+            <p class="text-lg text-slate-400">Drag the word blocks into the empty slots to form the correct sentence.</p>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quiz-container" class="space-y-12">
+            <!-- Questions will be dynamically injected here -->
+        </div>
+
+        <!-- Action Buttons at Bottom -->
+        <div class="mt-16 mb-16 flex flex-col sm:flex-row justify-center items-center gap-4 relative z-20">
+            <button onclick="location.reload()" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-all hover:-translate-y-1 text-lg flex items-center w-full sm:w-auto justify-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                重新做 (Restart)
+            </button>
+            <button id="action-check" onclick="checkAnswers()" class="bg-sky-500 hover:bg-sky-400 text-white font-bold py-4 px-12 rounded-xl shadow-lg shadow-sky-500/20 transition-all hover:-translate-y-1 text-xl tracking-wider w-full sm:w-auto">
+                Check Answers
+            </button>
+        </div>
+
+        <!-- Results / Records Section -->
+        <div id="records-section" class="mt-20 pt-10 border-t border-slate-800">
+            <div class="flex items-center justify-between mb-8">
+                <h3 class="text-2xl font-bold text-slate-200 flex items-center">
+                    <svg class="w-6 h-6 mr-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Study Records
+                </h3>
+            </div>
+            
+            <div id="records-list" class="space-y-4">
+                <div class="text-center py-10 text-slate-500">Loading records...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full p-6 pop-in">
+            <div class="flex items-center justify-center w-16 h-16 mx-auto bg-rose-500/20 rounded-full mb-6">
+                <svg class="w-8 h-8 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white text-center mb-2">Delete Record?</h3>
+            <p class="text-slate-400 text-center mb-8">Are you sure you want to permanently delete this attempt? This action cannot be undone.</p>
+            <div class="flex justify-center gap-6">
+                <button onclick="closeDeleteModal()" class="px-8 py-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-lg font-medium transition-colors w-1/2">Cancel</button>
+                <button onclick="executeDelete()" class="px-8 py-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-lg font-bold transition-colors w-1/2 shadow-lg shadow-rose-900/50">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const vocabData = [
+            { hz: "今天星期几？", words: [{ hz: "今天", py: "jīn tiān" }, { hz: "星期", py: "xīng qī" }, { hz: "几", py: "jǐ" }, { hz: "？", py: "" }] },
+            { 
+                hz: "你今天几点起床？", 
+                altHz: "今天你几点起床？",
+                words: [{ hz: "你", py: "nǐ" }, { hz: "今天", py: "jīn tiān" }, { hz: "几点", py: "jǐ diǎn" }, { hz: "起床", py: "qǐ chuáng" }, { hz: "？", py: "" }] 
+            },
+            { 
+                hz: "你昨天几点睡觉？", 
+                altHz: "昨天你几点睡觉？",
+                words: [{ hz: "你", py: "nǐ" }, { hz: "昨天", py: "zuó tiān" }, { hz: "几点", py: "jǐ diǎn" }, { hz: "睡觉", py: "shuì jiào" }, { hz: "？", py: "" }] 
+            },
+            { 
+                hz: "你今天几点吃早饭？", 
+                altHz: "今天你几点吃早饭？",
+                words: [{ hz: "你", py: "nǐ" }, { hz: "今天", py: "jīn tiān" }, { hz: "几点", py: "jǐ diǎn" }, { hz: "吃", py: "chī" }, { hz: "早饭", py: "zǎo fàn" }, { hz: "？", py: "" }] 
+            },
+            { 
+                hz: "你明天几点吃晚饭？", 
+                altHz: "明天你几点吃晚饭？",
+                words: [{ hz: "你", py: "nǐ" }, { hz: "明天", py: "míng tiān" }, { hz: "几点", py: "jǐ diǎn" }, { hz: "吃晚饭", py: "chī wǎn fàn" }, { hz: "？", py: "" }] 
+            },
+            { hz: "你来自哪里？", words: [{ hz: "你", py: "nǐ" }, { hz: "来", py: "lái" }, { hz: "自", py: "zì" }, { hz: "哪", py: "nǎ" }, { hz: "里", py: "lǐ" }, { hz: "？", py: "" }] },
+            { hz: "你今年多大了？", words: [{ hz: "你", py: "nǐ" }, { hz: "今年", py: "jīn nián" }, { hz: "多大", py: "duō dà" }, { hz: "了", py: "le" }, { hz: "？", py: "" }] },
+            { hz: "我有两个孩子。", words: [{ hz: "我", py: "wǒ" }, { hz: "有", py: "yǒu" }, { hz: "两", py: "liǎng" }, { hz: "个", py: "gè" }, { hz: "孩子", py: "hái zi" }, { hz: "。", py: "" }] },
+            { hz: "你的妈妈姓什么？", words: [{ hz: "你的", py: "nǐ de" }, { hz: "妈妈", py: "mā ma" }, { hz: "姓", py: "xìng" }, { hz: "什么", py: "shén me" }, { hz: "？", py: "" }] },
+            { hz: "你家有几口人？", words: [{ hz: "你家", py: "nǐ jiā" }, { hz: "有", py: "yǒu" }, { hz: "几", py: "jǐ" }, { hz: "口", py: "kǒu" }, { hz: "人", py: "rén" }, { hz: "？", py: "" }] },
+            { hz: "你做什么工作？", words: [{ hz: "你", py: "nǐ" }, { hz: "做", py: "zuò" }, { hz: "什么", py: "shén me" }, { hz: "工作", py: "gōng zuò" }, { hz: "？", py: "" }] },
+            { hz: "你的车在哪里？", words: [{ hz: "你的", py: "nǐ de" }, { hz: "车", py: "chē" }, { hz: "在", py: "zài" }, { hz: "哪里", py: "nǎ lǐ" }, { hz: "？", py: "" }] },
+            { hz: "明天是几月几号？", words: [{ hz: "明天", py: "míng tiān" }, { hz: "是", py: "shì" }, { hz: "几月", py: "jǐ yuè" }, { hz: "几号", py: "jǐ hào" }, { hz: "？", py: "" }] },
+            { hz: "你的生日是几月几号？", words: [{ hz: "你的", py: "nǐ de" }, { hz: "生日", py: "shēng rì" }, { hz: "是", py: "shì" }, { hz: "几月", py: "jǐ yuè" }, { hz: "几号", py: "jǐ hào" }, { hz: "？", py: "" }] },
+            { hz: "祝你生日快乐！", words: [{ hz: "祝你", py: "zhù nǐ" }, { hz: "生日", py: "shēng rì" }, { hz: "快乐", py: "kuài lè" }, { hz: "！", py: "" }] },
+            { hz: "你可以给我菜单吗？", words: [{ hz: "你", py: "nǐ" }, { hz: "可以", py: "kě yǐ" }, { hz: "给", py: "gěi" }, { hz: "我", py: "wǒ" }, { hz: "菜单", py: "cài dān" }, { hz: "吗", py: "ma" }, { hz: "？", py: "" }] },
+            { hz: "来一份松鼠桂鱼。", words: [{ hz: "来", py: "lái" }, { hz: "一", py: "yì" }, { hz: "份", py: "fèn" }, { hz: "松鼠桂鱼", py: "sōng shǔ guì yú" }, { hz: "。", py: "" }] },
+            { hz: "我要一杯米酒。", words: [{ hz: "我要", py: "wǒ yào" }, { hz: "一", py: "yì" }, { hz: "杯", py: "bēi" }, { hz: "米酒", py: "mǐ jiǔ" }, { hz: "。", py: "" }] },
+            { hz: "你好，买单！", words: [{ hz: "你好", py: "nǐ hǎo" }, { hz: "，", py: "" }, { hz: "买单", py: "mǎi dān" }, { hz: "！", py: "" }] },
+            { hz: "你们有啤酒吗？", words: [{ hz: "你们", py: "nǐ men" }, { hz: "有", py: "yǒu" }, { hz: "啤酒", py: "pí jiǔ" }, { hz: "吗", py: "ma" }, { hz: "？", py: "" }] }
+        ];
+
+        const KVDB_BUCKET_ID = 'SdM9NUa4b8yiAqrCw5v7c3';
+        const STORAGE_KEY = 'richard_yct_data';
+        let testHistory = [];
+        let draggedItem = null;
+        let isSubmitted = false;
+        let pendingDeleteId = null;
+
+        const container = document.getElementById('quiz-container');
+        const statusEl = document.getElementById('cloud-status');
+
+        function initQuiz() {
+            container.innerHTML = '';
+            
+            vocabData.forEach((question, qIndex) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'glass-panel rounded-2xl p-6 sm:p-10 shadow-xl relative';
+                questionDiv.id = `question-${qIndex}`;
+
+                // Top row: Empty Slots
+                const slotsRow = document.createElement('div');
+                slotsRow.className = 'flex flex-wrap gap-4 justify-center mb-8 w-full min-h-[80px] p-2';
+                slotsRow.id = `slots-row-${qIndex}`;
+
+                question.words.forEach(() => {
+                    const slot = document.createElement('div');
+                    slot.className = 'drop-zone flex flex-col items-center justify-end h-24 sm:h-28 min-w-[4rem] sm:min-w-[5rem] px-2 bg-slate-800/50 rounded-t-lg';
+                    setupDropZone(slot);
+                    slotsRow.appendChild(slot);
+                });
+
+                // Bottom row: Draggable Blocks
+                const sourceRow = document.createElement('div');
+                sourceRow.className = 'flex flex-wrap gap-4 justify-center bg-slate-900/50 p-6 rounded-xl w-full border border-slate-700/50 min-h-[100px]';
+                sourceRow.id = `source-row-${qIndex}`;
+                setupDropZone(sourceRow);
+
+                const shuffledWords = [...question.words].sort(() => Math.random() - 0.5);
+                shuffledWords.forEach((word) => {
+                    const block = document.createElement('div');
+                    block.className = 'drag-item drag-block flex flex-col items-center justify-center h-20 sm:h-24 min-w-[4rem] sm:min-w-[5rem] px-3 sm:px-4 bg-slate-700/80 rounded-lg border border-slate-500 cursor-grab relative';
+                    block.draggable = true;
+                    block.dataset.hz = word.hz;
+                    block.dataset.py = word.py;
+                    
+                    if (word.py) {
+                        const hzA = word.hz.split('');
+                        const pyA = word.py.split(' ');
+                        let innerHtml = '<div class="flex gap-1 sm:gap-1.5">';
+                        for(let i=0; i<hzA.length; i++) {
+                            innerHtml += `<div class="flex flex-col items-center justify-end"><span class="text-base sm:text-[20px] text-sky-300 font-medium mb-1.5 whitespace-nowrap leading-none">${pyA[i] || ''}</span><span class="text-3xl sm:text-4xl zh-font font-bold text-white whitespace-nowrap leading-none tracking-normal">${hzA[i]}</span></div>`;
+                        }
+                        innerHtml += '</div>';
+                        block.innerHTML = innerHtml;
+                    } else {
+                        // Punctuation
+                        block.innerHTML = `<span class="text-3xl sm:text-4xl zh-font font-bold text-white whitespace-nowrap leading-none">${word.hz}</span>`;
+                    }
+
+                    setupDraggable(block);
+                    sourceRow.appendChild(block);
+                });
+
+                const feedbackEl = document.createElement('div');
+                feedbackEl.id = `feedback-${qIndex}`;
+                feedbackEl.className = 'mt-6 hidden rounded-xl p-6 transition-all';
+                
+                questionDiv.appendChild(slotsRow);
+                questionDiv.appendChild(sourceRow);
+                questionDiv.appendChild(feedbackEl);
+                container.appendChild(questionDiv);
+            });
+        }
+
+        function setupDraggable(item) {
+            item.addEventListener('dragstart', (e) => {
+                if (isSubmitted) return;
+                
+                // 清理浏览器默认选中行为，防止带出拖拽虚影
+                window.getSelection().removeAllRanges();
+                e.dataTransfer.setDragImage(item, item.offsetWidth / 2, item.offsetHeight / 2);
+
+                draggedItem = item;
+                setTimeout(() => item.classList.add('dragging'), 0);
+            });
+
+            item.addEventListener('dragend', () => {
+                draggedItem.classList.remove('dragging');
+                draggedItem = null;
+                document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('drag-over'));
+            });
+
+            // Touch support
+            item.addEventListener('touchstart', (e) => {
+                if (isSubmitted) return;
+                window.getSelection().removeAllRanges();
+                draggedItem = item;
+                item.classList.add('dragging');
+            }, {passive: true});
+
+            item.addEventListener('touchend', (e) => {
+                if(!draggedItem) return;
+                item.classList.remove('dragging');
+                
+                const touch = e.changedTouches[0];
+                const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+                const dropZone = targetEl ? targetEl.closest('.drop-zone') : null;
+                const otherDragItem = targetEl ? targetEl.closest('.drag-item') : null;
+
+                if (dropZone && dropZone !== item.parentNode) {
+                    if (dropZone.classList.contains('flex-col') && dropZone.children.length > 0) {
+                        const existingItem = dropZone.children[0];
+                        item.parentNode.appendChild(existingItem);
+                        dropZone.appendChild(item);
+                    } else {
+                        dropZone.appendChild(item);
+                    }
+                } else if (otherDragItem && otherDragItem !== item) {
+                    const parent1 = item.parentNode;
+                    const parent2 = otherDragItem.parentNode;
+                    parent1.appendChild(otherDragItem);
+                    parent2.appendChild(item);
+                }
+                draggedItem = null;
+            });
+        }
+
+        function setupDropZone(zone) {
+            zone.addEventListener('dragover', e => {
+                if (isSubmitted) return;
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', e => {
+                if (isSubmitted || !draggedItem) return;
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+
+                const targetItem = e.target.closest('.drag-item');
+
+                if (zone.id.startsWith('source-row')) {
+                    // Dropping back to pool
+                    zone.appendChild(draggedItem);
+                } else {
+                    // Dropping into a slot
+                    if (zone.children.length === 0) {
+                        // Empty slot
+                        zone.appendChild(draggedItem);
+                    } else {
+                        // Slot occupied, Swap them
+                        const existingItem = zone.children[0];
+                        const originZone = draggedItem.parentNode;
+                        originZone.appendChild(existingItem);
+                        zone.appendChild(draggedItem);
+                    }
+                }
+            });
+        }
+
+        function checkAnswers() {
+            if (isSubmitted) return;
+            isSubmitted = true;
+            document.getElementById('action-check').disabled = true;
+            document.getElementById('action-check').classList.add('opacity-50', 'cursor-not-allowed');
+            
+            // Disable dragging
+            document.querySelectorAll('.drag-item').forEach(el => el.draggable = false);
+
+            let score = 0;
+            const details = [];
+
+            vocabData.forEach((question, index) => {
+                const slotsRow = document.getElementById(`slots-row-${index}`);
+                const feedbackEl = document.getElementById(`feedback-${index}`);
+                
+                let userSentence = "";
+                Array.from(slotsRow.children).forEach(slot => {
+                    if (slot.children.length > 0) {
+                        userSentence += slot.children[0].dataset.hz;
+                    }
+                });
+
+                const isCorrect = (userSentence === question.hz) || (question.altHz && userSentence === question.altHz);
+
+                if (isCorrect) {
+                    score++;
+                    feedbackEl.className = 'mt-6 bg-emerald-900/30 border border-emerald-800/50 rounded-xl p-6 pop-in text-center';
+                    feedbackEl.innerHTML = `<p class="text-emerald-400 font-bold text-xl flex items-center justify-center"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Correct</p>`;
+                    feedbackEl.classList.remove('hidden');
+                } else {
+                    feedbackEl.className = 'mt-6 bg-rose-900/20 border border-rose-800/50 rounded-xl p-6 pop-in';
+                    
+                    // Generate Correct Answer Blocks
+                    let correctHtml = '';
+                    question.words.forEach(w => {
+                        if (w.py) {
+                            const hzA = w.hz.split('');
+                            const pyA = w.py.split(' ');
+                            let innerHtml = '<div class="flex gap-0.5 sm:gap-1">';
+                            for(let i=0; i<hzA.length; i++) {
+                                innerHtml += `<div class="flex flex-col items-center justify-end"><span class="text-sm sm:text-base text-sky-400 font-medium mb-1 whitespace-nowrap leading-none">${pyA[i] || ''}</span><span class="text-xl sm:text-2xl zh-font font-bold text-slate-200 whitespace-nowrap leading-none">${hzA[i]}</span></div>`;
+                            }
+                            innerHtml += '</div>';
+                            correctHtml += `<div class="flex flex-col items-center justify-center h-16 sm:h-20 min-w-[3.5rem] px-2 sm:px-3 bg-slate-800 rounded-lg border border-slate-700/50">${innerHtml}</div>`;
+                        } else {
+                            correctHtml += `<div class="flex flex-col items-center justify-center h-16 sm:h-20 min-w-[2.5rem] px-2 bg-slate-800 rounded-lg border border-slate-700/50"><span class="text-xl sm:text-2xl zh-font font-bold text-slate-400 whitespace-nowrap leading-none">${w.hz}</span></div>`;
+                        }
+                    });
+                    
+                    feedbackEl.innerHTML = `
+                        <p class="text-rose-400 font-bold text-xl flex items-center mb-4"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Incorrect</p>
+                        <p class="text-slate-400 text-sm mb-2">Correct Sentence:</p>
+                        <div class="flex flex-wrap gap-2">${correctHtml}</div>
+                    `;
+                    feedbackEl.classList.remove('hidden');
+                }
+
+                details.push({
+                    q: question.hz,
+                    correct: isCorrect,
+                    userA: userSentence || "(Incomplete)"
+                });
+            });
+
+            const now = new Date();
+            const cnTime = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Shanghai', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(now);
+            const usaTime = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(now);
+            
+            const newRecord = {
+                id: Date.now().toString(),
+                date: now.toISOString(),
+                score: score,
+                total: vocabData.length,
+                cnTime: cnTime,
+                usaTime: usaTime,
+                details: details
+            };
+
+            testHistory.unshift(newRecord);
+            saveCloudHistory();
+            renderHistory();
+            scrollToRecords();
+        }
+
+        // ==========================================
+        // 新增：读取学生真实答案并还原现场的核心函数
+        // ==========================================
+        function loadRecord(id) {
+            const record = testHistory.find(r => r.id === id);
+            if (!record) return;
+
+            // 锁定系统，禁止拖拽
+            isSubmitted = true;
+            document.getElementById('action-check').disabled = true;
+            document.getElementById('action-check').classList.add('opacity-50', 'cursor-not-allowed');
+            document.querySelectorAll('.drag-item').forEach(el => el.draggable = false);
+
+            // 遍历每一题，把词块根据学生的记录放回横线上
+            vocabData.forEach((question, qIndex) => {
+                const detail = record.details[qIndex];
+                const slotsRow = document.getElementById(`slots-row-${qIndex}`);
+                const sourceRow = document.getElementById(`source-row-${qIndex}`);
+                const feedbackEl = document.getElementById(`feedback-${qIndex}`);
+
+                // 1. 先把所有词块放回下方的池子里清理干净
+                Array.from(slotsRow.children).forEach(slot => {
+                    if (slot.children.length > 0) sourceRow.appendChild(slot.children[0]);
+                });
+
+                // 2. 根据学生的 userA 字符串，精准匹配词块并拖上横线
+                let remainingStr = detail ? detail.userA : "";
+                if (remainingStr === "(Incomplete)") remainingStr = "";
+
+                let slotIndex = 0;
+                while (remainingStr.length > 0 && slotIndex < slotsRow.children.length) {
+                    let matchedBlock = null;
+                    const availableBlocks = Array.from(sourceRow.querySelectorAll('.drag-item'));
+                    for (let block of availableBlocks) {
+                        const blockHz = block.dataset.hz;
+                        if (remainingStr.startsWith(blockHz)) {
+                            matchedBlock = block;
+                            break;
+                        }
+                    }
+                    if (matchedBlock) {
+                        slotsRow.children[slotIndex].appendChild(matchedBlock);
+                        remainingStr = remainingStr.slice(matchedBlock.dataset.hz.length);
+                        slotIndex++;
+                    } else {
+                        break; // 数据异常安全退出
+                    }
+                }
+
+                // 3. 渲染出对错颜色和正确答案提示
+                const isCorrect = detail ? detail.correct : false;
+
+                if (isCorrect) {
+                    feedbackEl.className = 'mt-6 bg-emerald-900/30 border border-emerald-800/50 rounded-xl p-6 pop-in text-center';
+                    feedbackEl.innerHTML = `<p class="text-emerald-400 font-bold text-xl flex items-center justify-center"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Correct</p>`;
+                    feedbackEl.classList.remove('hidden');
+                } else {
+                    feedbackEl.className = 'mt-6 bg-rose-900/20 border border-rose-800/50 rounded-xl p-6 pop-in';
+                    
+                    let correctHtml = '';
+                    question.words.forEach(w => {
+                        if (w.py) {
+                            const hzA = w.hz.split('');
+                            const pyA = w.py.split(' ');
+                            let innerHtml = '<div class="flex gap-0.5 sm:gap-1">';
+                            for(let i=0; i<hzA.length; i++) {
+                                innerHtml += `<div class="flex flex-col items-center justify-end"><span class="text-sm sm:text-base text-sky-400 font-medium mb-1 whitespace-nowrap leading-none">${pyA[i] || ''}</span><span class="text-xl sm:text-2xl zh-font font-bold text-slate-200 whitespace-nowrap leading-none">${hzA[i]}</span></div>`;
+                            }
+                            innerHtml += '</div>';
+                            correctHtml += `<div class="flex flex-col items-center justify-center h-16 sm:h-20 min-w-[3.5rem] px-2 sm:px-3 bg-slate-800 rounded-lg border border-slate-700/50">${innerHtml}</div>`;
+                        } else {
+                            correctHtml += `<div class="flex flex-col items-center justify-center h-16 sm:h-20 min-w-[2.5rem] px-2 bg-slate-800 rounded-lg border border-slate-700/50"><span class="text-xl sm:text-2xl zh-font font-bold text-slate-400 whitespace-nowrap leading-none">${w.hz}</span></div>`;
+                        }
+                    });
+                    
+                    feedbackEl.innerHTML = `
+                        <p class="text-rose-400 font-bold text-xl flex items-center mb-4"><svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Incorrect</p>
+                        <p class="text-slate-400 text-sm mb-2">Correct Sentence:</p>
+                        <div class="flex flex-wrap gap-2">${correctHtml}</div>
+                    `;
+                    feedbackEl.classList.remove('hidden');
+                }
+            });
+
+            // 还原完成后平滑滚动到最顶端第一题
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function fetchCloudHistory() {
+            statusEl.textContent = 'SYNCING...';
+            try {
+                const res = await fetch(`https://kvdb.io/${KVDB_BUCKET_ID}/${STORAGE_KEY}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data)) {
+                        testHistory = data;
+                        statusEl.textContent = '● SYNCED';
+                        statusEl.className = "ml-2 text-xs font-mono bg-emerald-900/50 px-2 py-0.5 rounded text-emerald-400 border border-emerald-800/50";
+                    }
+                } else {
+                    statusEl.textContent = '● READY';
+                }
+            } catch (e) {
+                console.error('Failed to fetch from KVDB:', e);
+                statusEl.textContent = '● OFFLINE';
+                statusEl.className = "ml-2 text-xs font-mono bg-rose-900/50 px-2 py-0.5 rounded text-rose-400 border border-rose-800/50";
+            }
+            renderHistory();
+        }
+
+        async function saveCloudHistory() {
+            statusEl.textContent = 'SAVING...';
+            try {
+                await fetch(`https://kvdb.io/${KVDB_BUCKET_ID}/${STORAGE_KEY}`, {
+                    method: 'POST',
+                    body: JSON.stringify(testHistory),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                statusEl.textContent = '● SYNCED';
+                statusEl.className = "ml-2 text-xs font-mono bg-emerald-900/50 px-2 py-0.5 rounded text-emerald-400 border border-emerald-800/50";
+            } catch (e) {
+                console.error('Failed to save to KVDB:', e);
+                statusEl.textContent = '● SAVE FAILED';
+                statusEl.className = "ml-2 text-xs font-mono bg-rose-900/50 px-2 py-0.5 rounded text-rose-400 border border-rose-800/50";
+            }
+        }
+
+        function renderHistory() {
+            const listEl = document.getElementById('records-list');
+            listEl.innerHTML = '';
+
+            if (testHistory.length === 0) {
+                listEl.innerHTML = '<div class="text-center py-10 text-slate-500 glass-panel rounded-xl">No records found yet.</div>';
+                return;
+            }
+
+            testHistory.forEach((record) => {
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-5 rounded-xl shadow-md border border-slate-700/50';
+                
+                const accuracy = Math.round((record.score / record.total) * 100);
+                let scoreColor = 'text-emerald-400';
+                if(accuracy < 60) scoreColor = 'text-rose-400';
+                else if(accuracy < 90) scoreColor = 'text-amber-400';
+
+                card.innerHTML = `
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 shadow-inner">
+                                <span class="text-2xl font-bold ${scoreColor}">${record.score}</span>
+                            </div>
+                            <div>
+                                <p class="text-slate-200 font-medium">Score: ${record.score} / ${record.total}</p>
+                                <div class="text-xs text-slate-400 mt-1 space-y-0.5 font-mono">
+                                    <p>🇨🇳 CHN: ${record.cnTime}</p>
+                                    <p>🇺🇸 USA: ${record.usaTime}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            <!-- 修改点：按钮点击事件绑定为加载真实记录的函数 loadRecord -->
+                            <button onclick="loadRecord('${record.id}')" class="w-full sm:w-auto px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded-lg transition-colors text-sm font-medium border border-indigo-500/30 flex justify-center items-center">
+                                Review Answers <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                            </button>
+                            <button onclick="confirmDelete('${record.id}')" class="w-full sm:w-auto p-2 bg-rose-900/30 hover:bg-rose-600/50 text-rose-400 rounded-lg transition-colors border border-rose-800/50 flex justify-center items-center" title="Delete Record">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        function confirmDelete(id) {
+            pendingDeleteId = id;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            pendingDeleteId = null;
+        }
+
+        async function executeDelete() {
+            if (pendingDeleteId) {
+                testHistory = testHistory.filter(r => r.id !== pendingDeleteId);
+                renderHistory();
+                closeDeleteModal();
+                try {
+                    await saveCloudHistory();
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+        }
+
+        function scrollToRecords() {
+            document.getElementById('records-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            initQuiz();
+            fetchCloudHistory();
+        };
+    </script>
+</body>
+</html>
